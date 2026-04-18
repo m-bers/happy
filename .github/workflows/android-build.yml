@@ -12,7 +12,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 180
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,9 +39,12 @@ jobs:
         working-directory: packages/happy-app
         run: pnpm expo prebuild --platform android --no-install
 
+      - name: Setup Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Gradle assembleDebug
         working-directory: packages/happy-app/android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleDebug --parallel --build-cache
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
