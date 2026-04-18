@@ -1,0 +1,51 @@
+name: Android Debug Build
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/happy-app/**'
+      - '.github/workflows/android-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Expo prebuild (android)
+        working-directory: packages/happy-app
+        run: pnpm expo prebuild --platform android --no-install
+
+      - name: Gradle assembleDebug
+        working-directory: packages/happy-app/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: happy-android-debug
+          path: packages/happy-app/android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
